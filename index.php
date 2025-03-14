@@ -1,6 +1,49 @@
 <?php
-session_start();
-$form_data = isset($_SESSION['form_data']) ? $_SESSION['form_data'] : [];
+session_start(); // Start the session
+$errors = [];
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Validate Name
+    if (empty($_POST['name']) || preg_match('/[0-9]/', $_POST['name'])) {
+        $errors['name'] = "Name must not contain numbers and is required.";
+    }
+
+    // Validate Age
+    if (empty($_POST['age']) || !is_numeric($_POST['age'])) {
+        $errors['age'] = "Age must be a number and is required.";
+    }
+
+    // Validate Gender
+    if (empty($_POST['gender'])) {
+        $errors['gender'] = "Please select at least one gender.";
+    }
+
+    // Validate Hobbies
+    if (empty($_POST['hobby'])) {
+        $errors['hobby'] = "Please select at least one hobby.";
+    }
+
+    // Validate Favorite Colors
+    if (empty($_POST['favorite_color'])) {
+        $errors['favorite_color'] = "Please select at least one color.";
+    }
+
+    // Validate Text Inputs for Numbers
+    $textFields = ['favorite_food', 'occupation', 'favorite_movie', 'favorite_book', 'vacation_destination', 'languages', 'favorite_sport', 'ideal_weekend', 'comments'];
+    foreach ($textFields as $field) {
+        if (!empty($_POST[$field]) && preg_match('/[0-9]/', $_POST[$field])) {
+            $errors[$field] = ucfirst(str_replace('_', ' ', $field)) . " must not contain numbers.";
+        }
+    }
+
+    // Check for errors
+    if (empty($errors)) {
+        // No errors, store data in session
+        $_SESSION['formData'] = $_POST; // Store all form data in session
+        header("Location: submit.php"); // Redirect to submit.php
+        exit();
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -8,74 +51,132 @@ $form_data = isset($_SESSION['form_data']) ? $_SESSION['form_data'] : [];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Questionnaire Form</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Test Form</title>
+    <link rel="stylesheet" href="index.css"> 
+    <style>
+        .error {
+            color: red; 
+            font-size: 0.9em; 
+            margin-top: -5px; 
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Questionnaire Form</h2>
-        <form action="submit.php" method="POST">
-            <label for="name">Full Name:</label>
-            <input type="text" id="name" name="name" value="<?php echo isset($form_data['name']) ? htmlspecialchars($form_data['name']) : ''; ?>" required>
-
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" value="<?php echo isset($form_data['email']) ? htmlspecialchars($form_data['email']) : ''; ?>" required>
-
-            <label for="age">Age:</label>
-            <input type="number" id="age" name="age" value="<?php echo isset($form_data['age']) ? htmlspecialchars($form_data['age']) : ''; ?>" required>
-
-            <label>Gender:</label>
-            <select name="gender" id="gender">
-                <option value="male" <?php echo (isset($form_data['gender']) && $form_data['gender'] == 'male') ? 'selected' : ''; ?>>Male</option>
-                <option value="female" <?php echo (isset($form_data['gender']) && $form_data['gender'] == 'female') ? 'selected' : ''; ?>>Female</option>
-                <option value="other" <?php echo (isset($form_data['gender']) && $form_data['gender'] == 'other') ? 'selected' : ''; ?>>Other</option>
-            </select>
-
-            <label>How comfortable are you with coding in JavaScript?</label>
-            <div class="radio-group">
-                <input type="radio" id="expert" name="coding_skill" value="Expert" <?php echo (isset($form_data['coding_skill']) && $form_data['coding_skill'] == 'Expert') ? 'checked' : ''; ?>>
-                <label for="expert">Expert</label>
-
-                <input type="radio" id="advanced" name="coding_skill" value="Advanced" <?php echo (isset($form_data['coding_skill']) && $form_data['coding_skill'] == 'Advanced') ? 'checked' : ''; ?>>
-                <label for="advanced">Advanced</label>
-
-                <input type="radio" id="beginner" name="coding_skill" value="Beginner" <?php echo (isset($form_data['coding_skill']) && $form_data['coding_skill'] == 'Beginner') ? 'checked' : ''; ?>>
-                <label for="beginner">Beginner</label>
+    <form method="post"> <!-- No action specified, submits to itself -->
+    <h1>Test Form</h1>
+        <ol>
+            <li>
+                <label for="question1">What is your name?</label>
+                <input type="text" id="question1" name="name" value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>" required>
+                <div class="error"><?php echo isset($errors['name']) ? $errors['name'] : ''; ?></div>
+            </li>
+            <li>
+                <label for="question2">What is your age?</label>
+                <input type="text" id="question2" name="age" value="<?php echo isset($_POST['age']) ? htmlspecialchars($_POST['age']) : ''; ?>" required>
+                <div class="error"><?php echo isset($errors['age']) ? $errors['age'] : ''; ?></div>
+            </li>
+            <li>
+             <label>What is your gender?</label>
+             <div class="radio-group">
+             <input type="radio" id="male" name="gender" value="male" <?php echo (isset($_POST['gender']) && $_POST['gender'] == 'male') ? 'checked' : ''; ?>>
+             <label for="male">Male</label>
+             <input type="radio" id="female" name="gender" value="female" <?php echo (isset($_POST['gender']) && $_POST['gender'] == 'female') ? 'checked' : ''; ?>>
+             <label for="female">Female</label>
             </div>
-
-            <label for="fav_language">What is your favorite programming language?</label>
-            <select name="fav_language" id="fav_language">
-                <option value="javascript" <?php echo (isset($form_data['fav_language']) && $form_data['fav_language'] == 'javascript') ? 'selected' : ''; ?>>JavaScript</option>
-                <option value="python" <?php echo (isset($form_data['fav_language']) && $form_data['fav_language'] == 'python') ? 'selected' : ''; ?>>Python</option>
-                <option value="java" <?php echo (isset($form_data['fav_language']) && $form_data['fav_language'] == 'java') ? 'selected' : ''; ?>>Java</option>
-            </select>
-
-            <label>Which development field interests you the most?</label>
+            <div class="error"><?php echo isset($errors['gender']) ? $errors['gender'] : ''; ?></div>
+            </li>
+            <li>
+            <label>What are your hobbies? (Select all that apply)</label>
             <div class="checkbox-group">
-                <input type="checkbox" id="web_dev" name="dev_field[]" value="Web Development" <?php echo (isset($form_data['dev_field']) && in_array('Web Development', $form_data['dev_field'])) ? 'checked' : ''; ?>>
-                <label for="web_dev">Web Development</label>
-
-                <input type="checkbox" id="mobile_dev" name="dev_field[]" value="Mobile App Development" <?php echo (isset($form_data['dev_field']) && in_array('Mobile App Development', $form_data['dev_field'])) ? 'checked' : ''; ?>>
-                <label for="mobile_dev">Mobile App Development</label>
-
-                <input type="checkbox" id="game_dev" name="dev_field[]" value="Game Development" <?php echo (isset($form_data['dev_field']) && in_array('Game Development', $form_data['dev_field'])) ? 'checked' : ''; ?>>
-                <label for="game_dev">Game Development</label>
+            <input type="checkbox" id="hobby1" name="hobby[]" value="reading" <?php echo (isset($_POST['hobby']) && in_array('reading', $_POST['hobby'])) ? 'checked' : ''; ?>>
+            <label for="hobby1">Reading</label>
+            <input type="checkbox" id="hobby2" name="hobby[]" value="traveling" <?php echo (isset($_POST['hobby']) && in_array('traveling', $_POST['hobby'])) ? 'checked' : ''; ?>>
+            <label for="hobby2">Traveling</label>
+            <input type="checkbox" id="hobby3" name="hobby[]" value="sports" <?php echo (isset($_POST['hobby']) && in_array('sports', $_POST['hobby'])) ? 'checked' : ''; ?>>
+            <label for="hobby3">Sports</label>
+            <input type="checkbox" id="hobby4" name="hobby[]" value="music" <?php echo (isset($_POST['hobby']) && in_array('music', $_POST['hobby'])) ? 'checked' : ''; ?>>
+            <label for="hobby4">Music</label>
+            <input type="checkbox" id="hobby5" name="hobby[]" value="art" <?php echo (isset($_POST['hobby']) && in_array('art', $_POST['hobby'])) ? 'checked' : ''; ?>>
+            <label for="hobby5">Art</label>
             </div>
-
-            <label>How often do you code?</label>
+           <div class="error"><?php echo isset($errors['hobby']) ? $errors['hobby'] : ''; ?></div>
+           </li>
+           <li>
+            <label>What are your favorite colors? (Select all that apply)</label>
+            <div class="checkbox-group">
+            <input type="checkbox" id="color_red" name="favorite_color[]" value="red" <?php echo (isset($_POST['favorite_color']) && in_array('red', $_POST['favorite_color'])) ? 'checked' : ''; ?>>
+            <label for="color_red">Red</label>
+            <input type="checkbox" id="color_blue" name="favorite_color[]" value="blue" <?php echo (isset($_POST['favorite_color']) && in_array('blue', $_POST['favorite_color'])) ? 'checked' : ''; ?>>
+            <label for="color_blue">Blue</label>
+            <input type="checkbox" id="color_yellow" name="favorite_color[]" value="yellow" <?php echo (isset($_POST['favorite_color']) && in_array('yellow', $_POST['favorite_color'])) ? 'checked' : ''; ?>>
+            <label for="color_yellow">Yellow</label>
+            <input type="checkbox" id="color_violet" name="favorite_color[]" value="violet" <?php echo (isset($_POST['favorite_color']) && in_array('violet', $_POST['favorite_color'])) ? 'checked' : ''; ?>>
+            <label for="color_violet">Violet</label>
+            <input type="checkbox" id="color_pink" name="favorite_color[]" value="pink" <?php echo (isset($_POST['favorite_color']) && in_array('pink', $_POST['favorite_color'])) ? 'checked' : ''; ?>>
+            <label for="color_pink">Pink</label>
+            <input type="checkbox" id="color_black" name="favorite_color[]" value="black" <?php echo (isset($_POST['favorite_color']) && in_array('black', $_POST['favorite_color'])) ? 'checked' : ''; ?>>
+            <label for="color_black">Black</label>
+            </div>
+            <div class="error"><?php echo isset($errors['favorite_color']) ? $errors['favorite_color'] : ''; ?></div>
+          </li>
+            <li>
+                <label for="question6">What is your favorite food?</label>
+                <input type="text" id="question6" name="favorite_food" value="<?php echo isset($_POST['favorite_food']) ? htmlspecialchars($_POST['favorite_food']) : ''; ?>" required>
+                <div class="error"><?php echo isset($errors['favorite_food']) ? $errors['favorite_food'] : ''; ?></div>
+            </li>
+            <li>
+            <label>Do you have any pets?</label>
             <div class="radio-group">
-                <input type="radio" id="daily" name="coding_frequency" value="Daily" <?php echo (isset($form_data['coding_frequency']) && $form_data['coding_frequency'] == 'Daily') ? 'checked' : ''; ?>>
-                <label for="daily">Daily</label>
-
-                <input type="radio" id="weekly" name="coding_frequency" value="Weekly" <?php echo (isset($form_data['coding_frequency']) && $form_data['coding_frequency'] == 'Weekly') ? 'checked' : ''; ?>>
-                <label for="weekly">Weekly</label>
-
-                <input type="radio" id="monthly" name="coding_frequency" value="Monthly" <?php echo (isset($form_data['coding_frequency']) && $form_data['coding_frequency'] == 'Monthly') ? 'checked' : ''; ?>>
-                <label for="monthly">Monthly</label>
+            <input type="radio" id="pets_yes" name="pets" value="yes" <?php echo (isset($_POST['pets']) && $_POST['pets'] == 'yes') ? 'checked' : ''; ?>>
+            <label for="pets_yes">Yes</label>
+            <input type="radio" id="pets_no" name="pets" value="no" <?php echo (isset($_POST['pets']) && $_POST['pets'] == 'no') ? 'checked' : ''; ?>>
+            <label for="pets_no">No</label>
             </div>
-
-            <button type="submit">Submit</button>
-        </form>
-    </div>
+            <div class="error"><?php echo isset($errors['pets']) ? $errors['pets'] : ''; ?></div>
+            </li>
+            <li>
+                <label for="question8">What is your occupation?</label>
+                <input type="text" id="question8" name="occupation" value="<?php echo isset($_POST['occupation']) ? htmlspecialchars($_POST['occupation']) : ''; ?>" required>
+                <div class="error"><?php echo isset($errors['occupation']) ? $errors['occupation'] : ''; ?></div>
+            </li>
+            <li>
+                <label for="question9">What is your favorite movie?</label>
+                <input type="text" id="question9" name="favorite_movie" value="<?php echo isset($_POST['favorite_movie']) ? htmlspecialchars($_POST['favorite_movie']) : ''; ?>" required>
+                <div class="error"><?php echo isset($errors['favorite_movie']) ? $errors['favorite_movie'] : ''; ?></div>
+            </li>
+            <li>
+                <label for="question10">What is your favorite book?</label>
+                <input type="text" id="question10" name="favorite_book" value="<?php echo isset($_POST['favorite_book']) ? htmlspecialchars($_POST['favorite_book']) : ''; ?>" required>
+                <div class="error"><?php echo isset($errors['favorite_book']) ? $errors['favorite_book'] : ''; ?></div>
+            </li>
+            <li>
+                <label for="question11">What is your dream vacation destination?</label>
+                <input type="text" id="question11" name="vacation_destination" value="<?php echo isset($_POST['vacation_destination']) ? htmlspecialchars($_POST['vacation_destination']) : ''; ?>" required>
+                <div class="error"><?php echo isset($errors['vacation_destination']) ? $errors['vacation_destination'] : ''; ?></div>
+            </li>
+            <li>
+                <label for="question12">What languages do you speak?</label>
+                <input type="text" id="question12" name="languages" value="<?php echo isset($_POST['languages']) ? htmlspecialchars($_POST['languages']) : ''; ?>" required>
+                <div class="error"><?php echo isset($errors['languages']) ? $errors['languages'] : ''; ?></div>
+            </li>
+            <li>
+                <label for="question13">What is your favorite sport?</label>
+                <input type="text" id="question13" name="favorite_sport" value="<?php echo isset($_POST['favorite_sport']) ? htmlspecialchars($_POST['favorite_sport']) : ''; ?>" required>
+                <div class="error"><?php echo isset($errors['favorite_sport']) ? $errors['favorite_sport'] : ''; ?></div>
+            </li>
+            <li>
+                <label for="question14">Please describe your ideal weekend:</label><br>
+                <textarea id="question14" name="ideal_weekend" rows="4" cols="50"><?php echo isset($_POST['ideal_weekend']) ? htmlspecialchars($_POST['ideal_weekend']) : ''; ?></textarea>
+                <div class="error"><?php echo isset($errors['ideal_weekend']) ? $errors['ideal_weekend'] : ''; ?></div>
+            </li>
+            <li>
+                <label for="question15">Any additional comments or suggestions:</label><br>
+                <textarea id="question15" name="comments" rows="4" cols="50"><?php echo isset($_POST['comments']) ? htmlspecialchars($_POST['comments']) : ''; ?></textarea>
+                <div class="error"><?php echo isset($errors['comments']) ? $errors['comments'] : ''; ?></div>
+            </li>
+        </ol>
+        <input type="submit" value="Submit">
+    </form>
 </body>
 </html>
